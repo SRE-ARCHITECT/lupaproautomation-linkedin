@@ -16,47 +16,60 @@ ASSETS_DIR = os.path.join(BASE_DIR, 'assets')
 STORY_TRACKER = os.path.join(BASE_DIR, 'post_history.txt')
 
 def get_unique_copy():
-    """Usa o Gemini para gerar uma copy de vendas inédita."""
-    api_key = os.getenv("GEMINI_API_KEY")
-    if not api_key:
-        return "🚨 Lupa PRO: Licitações Milionárias na sua mão! 👉 lupapro.vercel.app"
+    """Gera copy inédita com Fallback: Gemini 2.0 -> Gemini 1.5 -> Groq."""
+    gemini_key = os.getenv("GEMINI_API_KEY")
+    groq_key = os.getenv("GROQ_API_KEY")
     
-    genai.configure(api_key=api_key)
-    model = genai.GenerativeModel("gemini-2.0-flash")
-    
-    # Busca histórico para evitar repetição
+    # Busca histórico
     history = ""
     if os.path.exists(STORY_TRACKER):
         with open(STORY_TRACKER, 'r', encoding='utf-8') as f:
-            history = f.read()[-2000:] # Pega os últimos caracteres
+            history = f.read()[-2000:]
 
-    prompt = f"""Você é um copywriter de elite especialista em B2B e Licitações Públicas (PNCP).
-Sua missão: Escrever uma postagem curta e impactante para o LinkedIn sobre o SaaS Lupa PRO.
-
-O Lupa PRO é um radar de IA que encontra editais milionários antes da concorrência e envia pro Telegram.
-
+    prompt = f"""Você é um copywriter sênior. Crie uma postagem curta e impactante para o LinkedIn sobre o SaaS Lupa PRO.
+O Lupa PRO é um radar de IA que encontra editais milionários do PNCP e envia para o Telegram.
 REGRAS:
-1. NUNCA repita frases ou chamadas usadas anteriormente: {history}
-2. Varie o tom: às vezes urgente, às vezes técnico, às vezes focado em lucro, às vezes em produtividade.
-3. Use emojis de forma elegante.
-4. Mencione o link: lupapro.vercel.app
-5. Hashtags variadas (5 a 8) no final.
-6. Comece com uma "Headline" matadora em caps lock.
-
+1. NUNCA repita: {history}
+2. Mencione: lupapro.vercel.app
+3. Hashtags variadas no final.
+PRECISE SER CRIATIVO E VARIAR O TEMA (Lucro, Tempo, Concorrência, Tecnologia).
 Retorne APENAS o texto da postagem."""
 
+    # TENTATIVA 1: Gemini 2.0
     try:
-        response = model.generate_content(prompt)
-        content = response.text.strip()
-        
-        # Salva no histórico
-        with open(STORY_TRACKER, 'a', encoding='utf-8') as f:
-            f.write(f"\n---\n{content[:100]}")
-            
-        return content
+        print("🤖 Tentando Gemini 2.0 Flash...")
+        genai.configure(api_key=gemini_key)
+        model = genai.GenerativeModel("gemini-2.0-flash")
+        return model.generate_content(prompt).text.strip()
     except Exception as e:
-        print(f"❌ Erro na IA: {e}")
-        return "🚀 Descubra licitações milionárias com o Lupa PRO! 👉 lupapro.vercel.app"
+        print(f"⚠️ Gemini 2.0 falhou: {e}")
+
+    # TENTATIVA 2: Gemini 1.5
+    try:
+        print("🤖 Tentando Gemini 1.5 Flash (Fallback)...")
+        model = genai.GenerativeModel("gemini-1.5-flash")
+        return model.generate_content(prompt).text.strip()
+    except Exception as e:
+        print(f"⚠️ Gemini 1.5 falhou: {e}")
+
+    # TENTATIVA 3: Groq (Llama 3)
+    try:
+        if groq_key:
+            print("🤖 Tentando Groq Llama-3 (Fallback Final)...")
+            response = requests.post(
+                "https://api.groq.com/openai/v1/chat/completions",
+                headers={"Authorization": f"Bearer {groq_key}", "Content-Type": "application/json"},
+                json={
+                    "model": "llama-3.1-70b-versatile",
+                    "messages": [{"role": "user", "content": prompt}],
+                    "temperature": 0.8
+                }
+            )
+            return response.json()['choices'][0]['message']['content'].strip()
+    except Exception as e:
+        print(f"❌ Todas as IAs falharam: {e}")
+    
+    return "📈 Escalando negócios com o Lupa PRO! 👉 lupapro.vercel.app"
 
 def enviar_via_mcp(texto: str, image_urls: list) -> bool:
     token = os.getenv("BUFFER_ACCESS_TOKEN")
