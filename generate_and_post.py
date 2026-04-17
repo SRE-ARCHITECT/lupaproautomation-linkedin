@@ -75,7 +75,7 @@ Retorne APENAS o texto da postagem (copy)."""
                 "https://api.groq.com/openai/v1/chat/completions",
                 headers={"Authorization": f"Bearer {groq_key}", "Content-Type": "application/json"},
                 json={
-                    "model": "llama-3.1-70b-versatile",
+                    "model": "llama-3.3-70b-versatile",
                     "messages": [{"role": "user", "content": prompt}],
                     "temperature": 0.8
                 }
@@ -97,7 +97,8 @@ def enviar_via_mcp(texto: str, image_urls: list) -> bool:
 
     headers = {
         "Authorization": f"Bearer {token}",
-        "Content-Type": "application/json"
+        "Content-Type": "application/json",
+        "Accept": "application/json, text/event-stream"
     }
 
     arguments = {
