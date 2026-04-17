@@ -1,0 +1,14 @@
+.env
+.venv/
+env/
+venv/
+ENV/
+__pycache__/
+*.pyc
+.pytest_cache/
+.vscode/
+post_history.txt
+current_day.txt
+run_log.txt
+*.zip
+*.bat
