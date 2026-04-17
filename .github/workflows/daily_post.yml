@@ -9,6 +9,8 @@ on:
 jobs:
   post:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write # Necessário para fazer push do post_history.txt
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -20,7 +22,7 @@ jobs:
 
       - name: Install Dependencies
         run: |
-          pip install google-generativeai requests python-dotenv
+          pip install -r requirements.txt
 
       - name: Run Automation
         env:
@@ -29,8 +31,13 @@ jobs:
           BUFFER_PROFILE_ID: ${{ secrets.BUFFER_PROFILE_ID }}
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
         run: |
-          # Adiciona um atraso aleatório de até 60 minutos para variar o horário
-          python -c "import time, random; time.sleep(random.randint(0, 3600))"
           python generate_and_post.py
+
+      - name: Commit and Push History
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add post_history.txt
+          git commit -m "Update post history [skip ci]" || echo "No changes to commit"
+          git push

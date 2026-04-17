@@ -26,13 +26,26 @@ def get_unique_copy():
         with open(STORY_TRACKER, 'r', encoding='utf-8') as f:
             history = f.read()[-2000:]
 
-    prompt = f"""Você é um copywriter sênior. Crie uma postagem curta e impactante para o LinkedIn sobre o SaaS Lupa PRO.
-O Lupa PRO é um radar de IA que encontra editais milionários do PNCP e envia para o Telegram.
-REGRAS:
-1. NUNCA repita: {history}
-2. Mencione: lupapro.vercel.app
-3. Hashtags variadas no final.
-Retorne APENAS o texto da postagem."""
+    # Validação de Segurança: Credenciais Críticas
+    if not gemini_key and not groq_key:
+        print("❌ ERRO CRÍTICO: Nenhuma API Key de IA encontrada (GEMINI_API_KEY ou GROQ_API_KEY).")
+        return "Erro de configuração de IA."
+
+    prompt = f"""Você é um copywriter sênior especializado em licenciamento público e B2B SaaS. 
+Crie uma postagens de autoridade para o LinkedIn sobre o radar de licitações Lupa PRO.
+O Lupa PRO usa IA para varrer o PNCP e entregar oportunidades milionárias direto no Telegram dos assinantes.
+
+DIRETRIZES DE ESTILO:
+- Tom de voz: Profissional, visionário e focado em lucro/escala.
+- Gatilhos: Autoridade, Eficiência (IA) e Escassez (não perder prazos).
+- Estrutura: Gancho impactante -> Problema/Oportunidade -> Solução (Lupa PRO) -> CTA.
+
+REGRAS RÍGIDAS:
+1. NUNCA repita ou use ideias similares a: {history}
+2. Link obrigatório: lupapro.vercel.app
+3. Use emojis de forma elegante (não exagere).
+4. Termine com 3 a 5 hashtags estratégicas.
+Retorne APENAS o texto da postagem (copy)."""
 
     # TENTATIVA 1: Gemini 2.0
     try:
@@ -91,7 +104,7 @@ def enviar_via_mcp(texto: str, image_urls: list) -> bool:
         "organizationId": org_id,
         "channelId": channel_id,
         "text": texto,
-        "schedulingType": "automatic",
+        "schedulingType": "automatic", # Isso joga o post para o próximo slot da fila (Queue)
         "assets": {
             "images": [{"url": url} for url in image_urls]
         }
@@ -138,20 +151,40 @@ def main():
     print("🤖 Gerando conteúdo inédito com IA...")
     copy = get_unique_copy()
     
-    # 2. Definir URLs das imagens (Raw GitHub)
-    # ATENÇÃO: Após criar seu repo, altere o link abaixo para o seu usuário
+    # 2. Salvar histórico para não repetir
+    if copy:
+        with open(STORY_TRACKER, 'a', encoding='utf-8') as f:
+            f.write(f"\n---\n{copy}")
+    
+    # 3. Definir URLs das imagens (Raw GitHub)
     USER = "SRE-ARCHITECT"
     REPO = "lupaproautomation-linkedin"
     
-    # Sorteia 3 a 5 screenshots para o carrossel
-    img_nums = random.sample(range(1, 11), random.randint(3, 5))
-    urls = [f"https://raw.githubusercontent.com/{USER}/{REPO}/main/assets/Screenshot_{n}.jpg" for n in img_nums]
+    # Detecta imagens disponíveis na pasta assets
+    valid_extensions = ('.jpg', '.jpeg', '.png')
+    available_images = [f for f in os.listdir(ASSETS_DIR) if f.lower().endswith(valid_extensions) and 'Screenshot' in f]
     
+    if not available_images:
+        print("⚠️ Nenhuma imagem de Screenshot encontrada em assets/. Usando imagem padrão.")
+        urls = [f"https://raw.githubusercontent.com/{USER}/{REPO}/main/assets/Banner.png"]
+    else:
+        # Sorteia 3 a 5 screenshots para o carrossel (ou o máximo disponível)
+        num_to_pick = min(len(available_images), random.randint(3, 5))
+        picked_images = random.sample(available_images, num_to_pick)
+        urls = [f"https://raw.githubusercontent.com/{USER}/{REPO}/main/assets/{img}" for img in picked_images]
+    
+    # 4. Enviar para o Buffer
+    if not os.getenv("BUFFER_ACCESS_TOKEN"):
+        print("🚨 AVISO: BUFFER_ACCESS_TOKEN não encontrado. Rodando em modo DRY RUN (apenas log).")
+        print(f"📝 TEXTO QUE SERIA POSTADO:\n{copy}")
+        print(f"🖼️ URLS DAS IMAGENS:\n{urls}")
+        return
+
     print(f"📤 Agendando no Buffer com {len(urls)} imagens...")
     if enviar_via_mcp(copy, urls):
-        print("✅ Sucesso! Post agendado.")
+        print("✅ Sucesso! Post agendado na fila do Buffer.")
     else:
-        print("❌ Falha no agendamento.")
+        print("❌ Falha no agendamento. Verifique os logs da API.")
 
 if __name__ == "__main__":
     main()
