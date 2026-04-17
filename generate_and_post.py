@@ -31,21 +31,27 @@ def get_unique_copy():
         print("❌ ERRO CRÍTICO: Nenhuma API Key de IA encontrada (GEMINI_API_KEY ou GROQ_API_KEY).")
         return "Erro de configuração de IA."
 
-    prompt = f"""Você é um copywriter sênior especializado em licenciamento público e B2B SaaS. 
-Crie uma postagens de autoridade para o LinkedIn sobre o radar de licitações Lupa PRO.
-O Lupa PRO usa IA para varrer o PNCP e entregar oportunidades milionárias direto no Telegram dos assinantes.
+    prompt = f"""Você é um Copywriter de elite focado em LinkedIn Ads e Growth B2B. 
+Crie uma postagem persuasiva e estratégica sobre o Lupa PRO — um radar de IA que domina o PNCP.
 
-DIRETRIZES DE ESTILO:
-- Tom de voz: Profissional, visionário e focado em lucro/escala.
-- Gatilhos: Autoridade, Eficiência (IA) e Escassez (não perder prazos).
-- Estrutura: Gancho impactante -> Problema/Oportunidade -> Solução (Lupa PRO) -> CTA.
+PÚBLICO-ALVO: Empresários, Analistas de Licitação e Diretores Comerciais.
+OBJETIVO: Autoridade e Conversão.
 
-REGRAS RÍGIDAS:
-1. NUNCA repita ou use ideias similares a: {history}
-2. Link obrigatório: lupapro.vercel.app
-3. Use emojis de forma elegante (não exagere).
-4. Termine com 3 a 5 hashtags estratégicas.
-Retorne APENAS o texto da postagem (copy)."""
+ESTRUTURA DE COPY (Use PAS ou AIDA alternadamente):
+1. GANCHO (HOOK): Uma frase curta e cortante que pare o scroll. Foque em lucro perdido, eficiência ou futuro.
+2. PROBLEMA: A dificuldade de encontrar editais relevantes no mar de dados do PNCP.
+3. AGITAÇÃO: O risco de perder contratos milionários por falta de monitoramento 24h.
+4. SOLUÇÃO: Como a IA do Lupa PRO entrega a oportunidade "mastigada" no Telegram.
+5. CTA: Convite magnético para clicar em lupapro.vercel.app
+
+DIRETRIZES RÍGIDAS:
+- Tom: Visionário, direto e ultra-profissional.
+- Formatação: Use parágrafos curtos (máximo 2 linhas) e listas de benefícios.
+- Restrição: NUNCA repita nada de: {history}
+- Obrigatoriedade: Link lupapro.vercel.app e emojis sóbrios (🚀, 📈, 🛡️, 👁️).
+- Hashtags: 3 a 5 ao final, focadas em #PNCP, #Licitações, #SaaS, #InteligênciaArtificial.
+
+Retorne APENAS o texto da copy, formatado para LinkedIn."""
 
     # TENTATIVA 1: Gemini 2.0
     try:
@@ -171,22 +177,35 @@ def main():
         with open(STORY_TRACKER, 'a', encoding='utf-8') as f:
             f.write(f"\n---\n{copy}")
     
-    # 3. Definir URLs das imagens (Raw GitHub)
+    # 3. Definir URLs das imagens (Estratégia Premium)
     USER = "SRE-ARCHITECT"
     REPO = "lupaproautomation-linkedin"
+    BASE_URL = f"https://raw.githubusercontent.com/{USER}/{REPO}/main/assets"
     
-    # Detecta imagens disponíveis na pasta assets
+    # Imagens Fixas de Branding (Obrigatórias)
+    banner = f"{BASE_URL}/Banner.png"
+    brand_black = f"{BASE_URL}/Screenshot_11.jpg"
+    brand_white = f"{BASE_URL}/Screenshot_.jpg"
+    
+    # Detecta capturas de tela disponíveis para o miolo do carrossel
     valid_extensions = ('.jpg', '.jpeg', '.png')
-    available_images = [f for f in os.listdir(ASSETS_DIR) if f.lower().endswith(valid_extensions) and 'Screenshot' in f]
+    all_files = os.listdir(ASSETS_DIR)
+    screenshots = [f for f in all_files if f.lower().endswith(valid_extensions) and 'Screenshot_' in f 
+                   and f not in ['Screenshot_11.jpg', 'Screenshot_.jpg']]
     
-    if not available_images:
-        print("⚠️ Nenhuma imagem de Screenshot encontrada em assets/. Usando imagem padrão.")
-        urls = [f"https://raw.githubusercontent.com/{USER}/{REPO}/main/assets/Banner.png"]
-    else:
-        # Sorteia 3 a 5 screenshots para o carrossel (ou o máximo disponível)
-        num_to_pick = min(len(available_images), random.randint(3, 5))
-        picked_images = random.sample(available_images, num_to_pick)
-        urls = [f"https://raw.githubusercontent.com/{USER}/{REPO}/main/assets/{img}" for img in picked_images]
+    # Montagem Estratégica:
+    # 1. Slide de Gancho (Banner)
+    # 2. Slide de Branding Black
+    # 3. Slides de Prova Social/Sistema (2-3 aleatórios)
+    # 4. Slide de Fechamento/CTA (Branding White)
+    
+    num_middle = min(len(screenshots), 2)
+    middle_slides = [f"{BASE_URL}/{img}" for img in random.sample(screenshots, num_middle)]
+    
+    urls = [banner, brand_black] + middle_slides + [brand_white]
+    
+    # Limitação do LinkedIn: Recomendado no máximo 5-7 imagens para Buffer
+    urls = urls[:6]
     
     # 4. Enviar para o Buffer
     if not os.getenv("BUFFER_ACCESS_TOKEN"):
