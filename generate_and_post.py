@@ -92,8 +92,12 @@ Retorne APENAS o texto da postagem (copy)."""
 
 def enviar_via_mcp(texto: str, image_urls: list) -> bool:
     token = os.getenv("BUFFER_ACCESS_TOKEN")
-    org_id = os.getenv("BUFFER_ORG_ID", "6976908d2cfaeb9054bda013")
-    channel_id = os.getenv("BUFFER_PROFILE_ID", "6976915b31b76c40caf9a9be")
+    org_id = os.getenv("BUFFER_ORG_ID")
+    channel_id = os.getenv("BUFFER_PROFILE_ID")
+
+    if not org_id or not channel_id:
+        print("❌ ERRO: BUFFER_ORG_ID ou BUFFER_PROFILE_ID não configurados.")
+        return False
 
     headers = {
         "Authorization": f"Bearer {token}",
@@ -126,22 +130,32 @@ def enviar_via_mcp(texto: str, image_urls: list) -> bool:
         response = requests.post(MCP_URL, headers=headers, json=payload, timeout=30)
         
         print(f"📡 [DEBUG] Status Code: {response.status_code}")
+        
+        # Buffer MCP retorna SSE (Server-Sent Events) no formato "data: {...}"
+        raw_text = response.text
         try:
-            resp_json = response.json()
-            print(f"📝 [DEBUG] Resposta Completa: {json.dumps(resp_json, indent=2)}")
+            # Tenta extrair o JSON se a resposta vier como "data: {"
+            if "data: {" in raw_text:
+                json_str = raw_text.split("data: ", 1)[1].strip()
+                resp_json = json.loads(json_str)
+            else:
+                resp_json = response.json()
             
-            # Verifica erros no nível do JSON-RPC ou da ferramenta
+            print(f"📝 [DEBUG] Resposta Processada: {json.dumps(resp_json, indent=2)}")
+            
             if "error" in resp_json:
                 print(f"❌ [AI ERROR] {resp_json['error']}")
                 return False
             
             if "result" in resp_json and resp_json["result"].get("isError"):
-                print(f"❌ [TOOL ERROR] Detalhes: {resp_json['result'].get('content')}")
+                content = resp_json["result"].get("content", [])
+                print(f"❌ [TOOL ERROR] Detalhes: {content}")
                 return False
 
             return response.status_code == 200
-        except:
-            print(f"⚠️ Resposta não é JSON: {response.text[:500]}")
+        except Exception as e:
+            print(f"⚠️ Erro ao processar resposta da API: {e}")
+            print(f"📝 Bruto: {raw_text[:500]}")
             return response.status_code == 200
     except Exception as e:
         print(f"❌ [EXCEPTION] Erro na requisição: {e}")
