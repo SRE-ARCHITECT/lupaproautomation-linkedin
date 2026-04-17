@@ -3,7 +3,7 @@ import os
 import random
 import time
 import requests
-import google.generativeai as genai
+from google import genai
 from dotenv import load_dotenv
 
 # Carregar variáveis de ambiente
@@ -32,23 +32,25 @@ REGRAS:
 1. NUNCA repita: {history}
 2. Mencione: lupapro.vercel.app
 3. Hashtags variadas no final.
-PRECISE SER CRIATIVO E VARIAR O TEMA (Lucro, Tempo, Concorrência, Tecnologia).
 Retorne APENAS o texto da postagem."""
 
     # TENTATIVA 1: Gemini 2.0
     try:
-        print("🤖 Tentando Gemini 2.0 Flash...")
-        genai.configure(api_key=gemini_key)
-        model = genai.GenerativeModel("gemini-2.0-flash")
-        return model.generate_content(prompt).text.strip()
+        if gemini_key:
+            print("🤖 Tentando Gemini 2.0 Flash...")
+            client = genai.Client(api_key=gemini_key)
+            response = client.models.generate_content(model="gemini-2.0-flash", contents=prompt)
+            return response.text.strip()
     except Exception as e:
         print(f"⚠️ Gemini 2.0 falhou: {e}")
 
     # TENTATIVA 2: Gemini 1.5
     try:
-        print("🤖 Tentando Gemini 1.5 Flash (Fallback)...")
-        model = genai.GenerativeModel("gemini-1.5-flash")
-        return model.generate_content(prompt).text.strip()
+        if gemini_key:
+            print("🤖 Tentando Gemini 1.5 Flash (Fallback)...")
+            client = genai.Client(api_key=gemini_key)
+            response = client.models.generate_content(model="gemini-1.5-flash", contents=prompt)
+            return response.text.strip()
     except Exception as e:
         print(f"⚠️ Gemini 1.5 falhou: {e}")
 
@@ -65,11 +67,15 @@ Retorne APENAS o texto da postagem."""
                     "temperature": 0.8
                 }
             )
-            return response.json()['choices'][0]['message']['content'].strip()
+            data = response.json()
+            if "choices" in data:
+                return data['choices'][0]['message']['content'].strip()
+            else:
+                print(f"⚠️ Erro Groq API: {data.get('error')}")
     except Exception as e:
-        print(f"❌ Todas as IAs falharam: {e}")
+        print(f"❌ Falha técnica Groq: {e}")
     
-    return "📈 Escalando negócios com o Lupa PRO! 👉 lupapro.vercel.app"
+    return "🚀 Escalando negócios com o Lupa PRO! 👉 lupapro.vercel.app"
 
 def enviar_via_mcp(texto: str, image_urls: list) -> bool:
     token = os.getenv("BUFFER_ACCESS_TOKEN")
@@ -102,9 +108,29 @@ def enviar_via_mcp(texto: str, image_urls: list) -> bool:
     }
 
     try:
+        print(f"📤 [DEBUG] Enviando para Org: {org_id} | Canal: {channel_id}")
         response = requests.post(MCP_URL, headers=headers, json=payload, timeout=30)
-        return response.status_code == 200
-    except:
+        
+        print(f"📡 [DEBUG] Status Code: {response.status_code}")
+        try:
+            resp_json = response.json()
+            print(f"📝 [DEBUG] Resposta Completa: {json.dumps(resp_json, indent=2)}")
+            
+            # Verifica erros no nível do JSON-RPC ou da ferramenta
+            if "error" in resp_json:
+                print(f"❌ [AI ERROR] {resp_json['error']}")
+                return False
+            
+            if "result" in resp_json and resp_json["result"].get("isError"):
+                print(f"❌ [TOOL ERROR] Detalhes: {resp_json['result'].get('content')}")
+                return False
+
+            return response.status_code == 200
+        except:
+            print(f"⚠️ Resposta não é JSON: {response.text[:500]}")
+            return response.status_code == 200
+    except Exception as e:
+        print(f"❌ [EXCEPTION] Erro na requisição: {e}")
         return False
 
 def main():
