@@ -31,27 +31,40 @@ def get_unique_copy():
         print("❌ ERRO CRÍTICO: Nenhuma API Key de IA encontrada (GEMINI_API_KEY ou GROQ_API_KEY).")
         return "Erro de configuração de IA."
 
+    angulos = [
+        "Foco na DOR DO TEMPO: Analistas de licitação perdem horas lendo diários oficiais manualmente.",
+        "Foco no MEDO (FOMO): O risco de perder o maior edital do ano porque a sua equipe foi dormir ou piscou.",
+        "Foco na VANTAGEM COMPETITIVA: Ser o primeiro a saber do edital e largar na frente dos concorrentes lentos.",
+        "Foco FINANCEIRO: Como aumentar o lucro, vencer mais licitações e ter previsibilidade de caixa sem inchar a equipe.",
+        "Foco na INOVAÇÃO: A transição de processos antigos (planilhas) para Inteligência Artificial automatizada.",
+        "Foco na PRATICIDADE: O alívio de ter as melhores oportunidades mastigadas e entregues diretamente no Telegram.",
+        "Foco em ESTATÍSTICA/AUTORIDADE: O volume brutal de editais no PNCP e como é impossível humano filtrar tudo."
+    ]
+    angulo_sorteado = random.choice(angulos)
+
     prompt = f"""Você é um Copywriter de elite focado em LinkedIn Ads e Growth B2B. 
 Crie uma postagem persuasiva e estratégica sobre o Lupa PRO — um radar de IA que domina o PNCP.
+
+🔥 ÂNGULO CRIATIVO DESTA POSTAGEM:
+{angulo_sorteado}
 
 PÚBLICO-ALVO: Empresários, Analistas de Licitação e Diretores Comerciais.
 OBJETIVO: Autoridade e Conversão.
 
-ESTRUTURA DE COPY (Use PAS ou AIDA alternadamente):
-1. GANCHO (HOOK): Uma frase curta e cortante que pare o scroll. Foque em lucro perdido, eficiência ou futuro.
-2. PROBLEMA: A dificuldade de encontrar editais relevantes no mar de dados do PNCP.
-3. AGITAÇÃO: O risco de perder contratos milionários por falta de monitoramento 24h.
-4. SOLUÇÃO: Como a IA do Lupa PRO entrega a oportunidade "mastigada" no Telegram.
-5. CTA: Convite magnético para clicar em lupapro.vercel.app
+ESTRUTURA DE COPY (Seja fluido e natural, adapte a estrutura PAS ou AIDA para focar no Ângulo Criativo acima):
+1. GANCHO (HOOK): Uma frase inicial chocante, provocativa ou com uma pergunta forte baseada no ângulo sorteado.
+2. CONTEXTO/PROBLEMA: Desenvolva o problema principal associado ao ângulo.
+3. SOLUÇÃO/TECNOLOGIA: Como o Lupa PRO (IA + PNCP + Telegram) resolve isso de forma elegante.
+4. CTA: Convite sutil e magnético para testar no lupapro.vercel.app
 
-DIRETRIZES RÍGIDAS:
-- Tom: Visionário, direto e ultra-profissional.
-- Formatação: Use parágrafos curtos (máximo 2 linhas) e listas de benefícios.
-- Restrição: NUNCA repita nada de: {history}
-- Obrigatoriedade: Link lupapro.vercel.app e emojis sóbrios (🚀, 📈, 🛡️, 👁️).
-- Hashtags: 3 a 5 ao final, focadas em #PNCP, #Licitações, #SaaS, #InteligênciaArtificial.
+DIRETRIZES RÍGIDAS DE VARIAÇÃO:
+- Mude o vocabulário, não use sempre as mesmas palavras ("dificuldade", "mar de dados", "risco"). Varie muito!
+- Formatação: Use parágrafos curtos, mas varie a forma visual (use listas, pequenos insights, etc).
+- Restrição: NUNCA repita nada da estrutura e palavras do histórico: {history}
+- Obrigatoriedade: O link exato lupapro.vercel.app e emojis adequados ao tom.
+- Hashtags: 3 a 5 focadas no nicho (#PNCP, #Licitações, #B2B, #SaaS).
 
-Retorne APENAS o texto da copy, formatado para LinkedIn."""
+Retorne APENAS o texto final do post para o LinkedIn."""
 
     # TENTATIVA 1: Gemini 2.0
     try:
