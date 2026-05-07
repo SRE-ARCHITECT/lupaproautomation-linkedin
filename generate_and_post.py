@@ -59,7 +59,8 @@ Retorne APENAS o texto da copy, formatado para LinkedIn."""
             print("🤖 Tentando Gemini 2.0 Flash...")
             client = genai.Client(api_key=gemini_key)
             response = client.models.generate_content(model="gemini-2.0-flash", contents=prompt)
-            return response.text.strip()
+            timestamp = str(int(time.time()))[-4:]
+            return f"{response.text.strip()}\n\n[ID:{timestamp}]"
     except Exception as e:
         print(f"⚠️ Gemini 2.0 falhou: {e}")
 
@@ -69,7 +70,8 @@ Retorne APENAS o texto da copy, formatado para LinkedIn."""
             print("🤖 Tentando Gemini 1.5 Flash (Fallback)...")
             client = genai.Client(api_key=gemini_key)
             response = client.models.generate_content(model="gemini-1.5-flash", contents=prompt)
-            return response.text.strip()
+            timestamp = str(int(time.time()))[-4:]
+            return f"{response.text.strip()}\n\n[ID:{timestamp}]"
     except Exception as e:
         print(f"⚠️ Gemini 1.5 falhou: {e}")
 
@@ -88,7 +90,8 @@ Retorne APENAS o texto da copy, formatado para LinkedIn."""
             )
             data = response.json()
             if "choices" in data:
-                return data['choices'][0]['message']['content'].strip()
+                timestamp = str(int(time.time()))[-4:]
+                return f"{data['choices'][0]['message']['content'].strip()}\n\n[ID:{timestamp}]"
             else:
                 print(f"⚠️ Erro Groq API: {data.get('error')}")
     except Exception as e:
