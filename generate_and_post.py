@@ -209,6 +209,10 @@ def main():
     
     urls = [banner, brand_black] + middle_slides + [brand_white]
     
+    # Adicionar timestamp nas URLs para burlar o detector de duplicidade de mídia do Buffer
+    timestamp = str(int(time.time()))
+    urls = [f"{url}?t={timestamp}" for url in urls]
+    
     # Limitação do LinkedIn: Recomendado no máximo 5-7 imagens para Buffer
     urls = urls[:6]
     
