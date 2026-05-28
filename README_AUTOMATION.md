@@ -78,4 +78,14 @@ requirements.txt          → Dependências
 
 ---
 
+## 📚 Documentação Técnica
+
+| Documento | Descrição |
+|-----------|-----------|
+| [`docs/PRD.md`](docs/PRD.md) | Product Requirements Document |
+| [`docs/BLUEPRINT.md`](docs/BLUEPRINT.md) | Blueprint técnico e arquitetura |
+| [`docs/SKILL.md`](docs/SKILL.md) | Runbook operacional e troubleshooting |
+
+---
+
 **Desenvolvido para o ecossistema Lupa PRO.** 👁️🛡️🚀📈
