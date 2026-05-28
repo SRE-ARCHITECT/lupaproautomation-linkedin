@@ -20,7 +20,14 @@ def validate_create_post_payload(payload: dict) -> tuple[bool, list[str]]:
         for i, asset in enumerate(assets):
             if not isinstance(asset, dict):
                 errors.append(f"arguments.assets[{i}] must be an object")
-            elif not asset.get("url"):
-                errors.append(f"arguments.assets[{i}].url is required")
+                continue
+            image = asset.get("image")
+            video = asset.get("video")
+            if not image and not video:
+                errors.append(f"arguments.assets[{i}] must have 'image' or 'video' property with an object containing 'url'")
+            if image and (not isinstance(image, dict) or not image.get("url")):
+                errors.append(f"arguments.assets[{i}].image must be an object with a 'url' property")
+            if video and (not isinstance(video, dict) or not video.get("url")):
+                errors.append(f"arguments.assets[{i}].video must be an object with a 'url' property")
 
     return len(errors) == 0, errors

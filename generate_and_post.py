@@ -124,7 +124,7 @@ def enviar_via_mcp(texto: str, image_urls: list) -> bool:
         print("[ERROR] BUFFER_ORG_ID ou BUFFER_PROFILE_ID não configurados.")
         return False
 
-    assets = [{"url": url} for url in image_urls]
+    assets = [{"image": {"url": url}} for url in image_urls]
 
     payload = {
         "jsonrpc": "2.0",
